@@ -10,6 +10,7 @@
 		<RepositoryUrl>https://github.com/electricessence/Open.TaskManager</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Version>1.0.0</Version>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	</PropertyGroup>
 
   <ItemGroup>
@@ -18,14 +19,11 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Common\Open.TaskManager.Common.csproj" />
+    <PackageReference Include="Open.TaskManager.Common" Version="1.0.0" />
   </ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.7">
+		<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.0.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
