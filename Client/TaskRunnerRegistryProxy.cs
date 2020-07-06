@@ -36,7 +36,7 @@ namespace Open.TaskManager.Client
 
 		public override async ValueTask DisposeAsync()
 		{
-			await base.DisposeAsync();
+			await base.DisposeAsync().ConfigureAwait(false);
 			var connection = await ActiveConnection.ConfigureAwait(false);
 			await connection.StopAsync().ConfigureAwait(false);
 			await connection.DisposeAsync().ConfigureAwait(false);
@@ -45,9 +45,9 @@ namespace Open.TaskManager.Client
 		public override async ValueTask<ITaskRunner> Get(int id)
 		{
 			if (Registry.TryGetValue(id, out var runner)) return runner;
-			var n = await TaskRunnerProxy.Create(id, this, Logger);
+			var n = await TaskRunnerProxy.Create(id, this, Logger).ConfigureAwait(false);
 			var r = Registry.GetOrAdd(id, n);
-			if (r != n) await n.DisposeAsync();
+			if (r != n) await n.DisposeAsync().ConfigureAwait(false);
 			else n.StateUpdated.Subscribe(state =>
 			{
 				if(state==TaskRunnerState.Disposed) Registry.TryRemove(id, out _);

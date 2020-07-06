@@ -22,8 +22,8 @@ namespace Open.TaskManager
 			var trp = new TaskRunnerProxy(id, registry, logger);
 			var state = registry.GetState(id);
 			var progress = registry.GetProgress(id);
-			trp.StateSubject.Init(await state);
-			trp.ProgressSubject.Init(await progress);
+			trp.StateSubject.Init(await state.ConfigureAwait(false));
+			trp.ProgressSubject.Init(await progress.ConfigureAwait(false));
 			return trp;
 		}
 
@@ -45,7 +45,7 @@ namespace Open.TaskManager
 				registry.StateUpdated -= Registry_StateUpdate;
 				registry.ProgressUpdated -= Registry_ProgressUpdated;
 			}
-			await DisposeAsync();
+			await DisposeAsync().ConfigureAwait(false);
 		}
 
 		public override ValueTask<bool> Start()

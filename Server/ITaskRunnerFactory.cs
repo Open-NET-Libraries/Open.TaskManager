@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Open.TaskManager
+namespace Open.TaskManager.Server
 {
 	public interface ITaskRunnerFactory
 	{

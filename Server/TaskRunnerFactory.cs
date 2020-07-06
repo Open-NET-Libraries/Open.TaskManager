@@ -2,14 +2,14 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Open.TaskManager
+namespace Open.TaskManager.Server
 {
 	public class TaskRunnerFactory : ITaskRunnerFactory
 	{
 		public ITaskRunnerRegistryService Registry { get; }
-		protected Func<CancellationToken, Action<object?>, Task> Factory { get; }
+		protected TaskRunnerFactoryDelegate Factory { get; }
 
-		public TaskRunnerFactory(ITaskRunnerRegistryService registry, Func<CancellationToken, Action<object?>, Task> factory)
+		public TaskRunnerFactory(ITaskRunnerRegistryService registry, TaskRunnerFactoryDelegate factory)
 		{
 			Registry = registry ?? throw new ArgumentNullException(nameof(registry));
 			Factory = factory ?? throw new ArgumentNullException(nameof(factory));
@@ -20,7 +20,7 @@ namespace Open.TaskManager
 
 	public class TaskRunnerFactory<TIdentity> : TaskRunnerFactory, ITaskRunnerFactory<TIdentity>
 	{
-		public TaskRunnerFactory(ITaskRunnerRegistryService registry, Func<CancellationToken, Action<object?>, Task> factory) : base(registry, factory)
+		public TaskRunnerFactory(ITaskRunnerRegistryService registry, TaskRunnerFactoryDelegate factory) : base(registry, factory)
 		{
 		}
 	}

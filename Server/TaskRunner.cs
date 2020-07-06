@@ -4,18 +4,18 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Open.TaskManager
+namespace Open.TaskManager.Server
 {
 	[SuppressMessage("Design", "CA2213:Disposable fields should be disposed", Justification = "Dispose is properly handled.")]
 	public class TaskRunner : TaskRunnerBase
 	{
-		protected Func<CancellationToken, Action<object?>, Task>? Factory { get; private set; }
+		protected TaskRunnerFactoryDelegate? Factory { get; private set; }
 
 		protected TaskRunner(int id, ILogger logger) : base(id, logger)
 		{
 		}
 
-		public TaskRunner(int id, Func<CancellationToken, Action<object?>, Task> factory, ILogger logger) : this(id, logger)
+		public TaskRunner(int id, TaskRunnerFactoryDelegate factory, ILogger logger) : this(id, logger)
 		{
 			Factory = factory ?? throw new ArgumentNullException(nameof(factory));
 			StateSubject.Init(TaskRunnerState.Stopped);
@@ -49,10 +49,12 @@ namespace Open.TaskManager
 				var factory = Factory;
 				if (factory is null) throw new ObjectDisposedException(nameof(TaskRunner));
 				_active = active = new ActiveTask(
+					Id,
 					factory,
 					ProgressSubject.OnNext,
 					_stopping?.Task,
-					() => {
+					() =>
+					{
 						bool update = true;
 						lock (_syncLock)
 						{
@@ -103,14 +105,14 @@ namespace Open.TaskManager
 
 			if (active is null)
 			{
-				await Trapped(stopping?.Task);
+				await Trapped(stopping?.Task).ConfigureAwait(false);
 				return;
 			}
 
 			active.Cancel();
 			UpdateState();
 			// Stopping should not cause any errors.
-			await Trapped(active.Task);
+			await Trapped(active.Task).ConfigureAwait(false);
 		}
 
 		static ValueTask Trapped(Task? task) => task is null ? new ValueTask() : new ValueTask(task.ContinueWith(t => Task.CompletedTask, TaskContinuationOptions.ExecuteSynchronously).Unwrap());
@@ -119,15 +121,16 @@ namespace Open.TaskManager
 		{
 			Log("disposing");
 			Factory = null;
-			await Stop();
-			await base.DisposeAsync();
+			await Stop().ConfigureAwait(false);
+			await base.DisposeAsync().ConfigureAwait(false);
 			Log("disposed");
 		}
 
 		class ActiveTask : IDisposable
 		{
 			public ActiveTask(
-				Func<CancellationToken, Action<object?>, Task> factory,
+				int id,
+				TaskRunnerFactoryDelegate factory,
 				Action<object?> progressUpdate,
 				Task? previous,
 				Action onComplete)
@@ -136,9 +139,9 @@ namespace Open.TaskManager
 				var canceller = new CancellationTokenSource();
 				// Need to guarantee deferred operation to prevent weird state issues.
 				Task = Task.Run(() => previous == null
-					? factory(canceller.Token, progressUpdate)
-					: previous.ContinueWith(t => factory(canceller.Token, progressUpdate), TaskContinuationOptions.ExecuteSynchronously))
-					.ContinueWith(t=>
+					? factory(id, canceller.Token, progressUpdate)
+					: previous.ContinueWith(t => factory(id, canceller.Token, progressUpdate), TaskContinuationOptions.ExecuteSynchronously))
+					.ContinueWith(t =>
 					{
 						onComplete();
 						return t;

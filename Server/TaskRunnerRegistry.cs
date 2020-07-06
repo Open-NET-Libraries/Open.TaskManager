@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Open.TaskManager
+namespace Open.TaskManager.Server
 {
 	public class TaskRunnerRegistry : TaskRunnerRegistryBase, ITaskRunnerRegistryService
 	{
@@ -31,7 +31,7 @@ namespace Open.TaskManager
 		{
 			try
 			{
-				var runner = await Get(id);
+				var runner = await Get(id).ConfigureAwait(false);
 				return runner.State;
 			}
 			catch (IndexOutOfRangeException) { }
@@ -42,24 +42,24 @@ namespace Open.TaskManager
 
 		public override async ValueTask<object?> GetProgress(int id)
 		{
-			var runner = await Get(id);
+			var runner = await Get(id).ConfigureAwait(false);
 			return runner.Progress;
 		}
 
 		public override async ValueTask<bool> Start(int id)
 		{
-			var runner = await Get(id);
-			return await runner.Start();
+			var runner = await Get(id).ConfigureAwait(false);
+			return await runner.Start().ConfigureAwait(false);
 		}
 
 		public override async ValueTask Stop(int id)
 		{
-			var runner = await Get(id);
-			await runner.Stop();
+			var runner = await Get(id).ConfigureAwait(false);
+			await runner.Stop().ConfigureAwait(false);
 		}
 
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Disposal happens later.")]
-		public ValueTask<ITaskRunner> Create(Func<CancellationToken, Action<object?>, Task> factory)
+		public ValueTask<ITaskRunner> Create(TaskRunnerFactoryDelegate factory)
 		{
 			var registry = Registry;
 			var id = Interlocked.Increment(ref LatestId);
@@ -75,7 +75,7 @@ namespace Open.TaskManager
 		{
 			if (!Registry.TryRemove(id, out var runner)) return false;
 			Log("removed from regsisty", runner.Id);
-			await runner.DisposeAsync();
+			await runner.DisposeAsync().ConfigureAwait(false);
 			return true;
 		}
 
@@ -84,7 +84,7 @@ namespace Open.TaskManager
 			var disposing = new List<Task>();
 			await foreach (var i in GetTaskRunnerIds()) disposing.Add(Remove(i).AsTask());
 			await Task.WhenAll(disposing).ConfigureAwait(false);
-			await base.DisposeAsync();
+			await base.DisposeAsync().ConfigureAwait(false);
 		}
 
 		public override async IAsyncEnumerable<int> GetTaskRunnerIds([EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -93,7 +93,7 @@ namespace Open.TaskManager
 			foreach (var i in keys)
 			{
 				if (cancellationToken.IsCancellationRequested) break;
-				if (await Contains(i)) yield return i;
+				if (await Contains(i).ConfigureAwait(false)) yield return i;
 			}
 		}
 	}
