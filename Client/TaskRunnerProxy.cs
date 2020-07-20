@@ -45,7 +45,7 @@ namespace Open.TaskManager
 				registry.StateUpdated -= Registry_StateUpdate;
 				registry.ProgressUpdated -= Registry_ProgressUpdated;
 			}
-			await DisposeAsync().ConfigureAwait(false);
+			await base.DisposeAsync().ConfigureAwait(false);
 		}
 
 		public override ValueTask<bool> Start()
