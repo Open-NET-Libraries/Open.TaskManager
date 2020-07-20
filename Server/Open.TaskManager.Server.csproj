@@ -33,7 +33,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
-		<PackageReference Include="Open.TaskManager.Common" Version="1.0.0" />
+		<PackageReference Include="Open.TaskManager.Common" Version="1.1.0" />
 	</ItemGroup>
 
 	<ItemGroup>
